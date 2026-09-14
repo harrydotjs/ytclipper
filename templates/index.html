@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="ytclipper - The easiest way to download specific parts of YouTube videos. Trim, clip, and download YouTube segments in up to 1080p quality for free online.">
+    <meta name="keywords" content="youtube clipper, trim youtube video, download youtube clip, cut youtube video, ytclipper, video downloader, youtube trimmer">
+    <meta name="author" content="ytclipper">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="ytclipper | Download Specific YouTube Video Clips">
+    <meta property="og:description" content="Easily clip and download specific timestamps from any YouTube video online.">
+    <meta property="og:type" content="website">
+
+    <title>ytclipper | Download Specific YouTube Video Clips</title>
+    
+    <!-- noUiSlider -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.8.1/nouislider.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.8.1/nouislider.min.js"></script>
+    
+    <!-- YouTube Iframe API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0d0d0d;
+            --bg-card: #1a1a1a;
+            --primary: #ff0000;
+            --primary-hover: #cc0000;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --border-color: #333;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            margin: 0; padding: 0;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        /* Navbar */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 5%; background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-color);
+            position: fixed; top: 0; width: 100%; box-sizing: border-box; z-index: 1000;
+        }
+        .nav-logo { font-size: 1.5rem; font-weight: 800; color: var(--text-main); text-decoration: none; letter-spacing: -0.5px; }
+        .nav-logo span { color: var(--primary); }
+        .nav-links { display: flex; gap: 20px; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+        .nav-links a:hover { color: var(--text-main); }
+
+        /* Main Content */
+        main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 100px 20px 40px; }
+
+        .hero-title { text-align: center; margin-bottom: 10px; font-size: 2.2rem; font-weight: 800; }
+        .hero-subtitle { text-align: center; color: var(--text-muted); margin-bottom: 40px; }
+
+        /* Container */
+        .container { 
+            background: var(--bg-card); padding: 2.5rem; border-radius: 16px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 100%; max-width: 550px; 
+            border: 1px solid var(--border-color); margin-bottom: 50px;
+        }
+
+        .form-group { margin-bottom: 1.2rem; width: 100%; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-muted); }
+        
+        .input-group { display: flex; gap: 10px; }
+        
+        input, select { 
+            width: 100%; padding: 0.85rem; 
+            background: #222; border: 1px solid #444; color: #fff;
+            border-radius: 8px; box-sizing: border-box; font-size: 1rem;
+            transition: border 0.3s, box-shadow 0.3s;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.2); }
+        input.time-box { text-align: center; letter-spacing: 2px; font-family: monospace; font-size: 1.1rem; }
+        
+        button { 
+            padding: 0.85rem 1.5rem; background: var(--primary); color: white; 
+            border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; 
+            font-weight: bold; transition: background 0.2s, transform 0.1s;
+        }
+        button:hover { background: var(--primary-hover); }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #4a2020; color: #888; cursor: not-allowed; transform: none; }
+        
+        .btn-full { width: 100%; padding: 1rem; margin-top: 10px; font-size: 1.1rem; }
+
+        /* Editor Section (Hidden initially) */
+        #editor-section { display: none; margin-top: 20px; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* YouTube Player Styling */
+        #player-container {
+            width: 100%; aspect-ratio: 16 / 9; background: #000; 
+            border-radius: 8px; overflow: hidden; margin-bottom: 1.5rem; 
+            border: 1px solid #444;
+        }
+        
+        /* Slider Customization */
+        #slider-container { padding: 10px 12px 30px 12px; }
+        .noUi-target { background: #333; border: none; box-shadow: none; height: 6px; }
+        .noUi-connect { background: var(--primary); }
+        .noUi-handle { border: 2px solid var(--primary); background: #1e1e1e; border-radius: 50%; box-shadow: none; cursor: grab; }
+        .noUi-handle:active { cursor: grabbing; }
+        .noUi-horizontal .noUi-handle { width: 22px; height: 22px; right: -11px; top: -8px; }
+        .noUi-handle:before, .noUi-handle:after { display: none; }
+
+        /* Status & Error */
+        #status { margin-top: 1rem; text-align: center; font-size: 0.95rem; }
+        .error { color: #ff6b6b; background: rgba(255, 107, 107, 0.1); padding: 12px; border-radius: 8px; white-space: pre-wrap; font-family: monospace; font-size: 0.85rem; text-align: left; border: 1px solid #ff6b6b; }
+
+        /* Guide Section */
+        #guide { width: 100%; max-width: 900px; padding: 20px; margin-bottom: 60px; }
+        .guide-title { text-align: center; font-size: 1.8rem; margin-bottom: 30px; }
+        .guide-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .guide-card { background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; }
+        .guide-step { background: var(--primary); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; margin: 0 auto 15px; }
+        .guide-card h3 { margin-top: 0; margin-bottom: 10px; }
+        .guide-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; margin: 0; }
+
+        /* Footer */
+        footer { background: var(--bg-card); padding: 25px; text-align: center; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.9rem; }
+        footer a { color: var(--text-main); text-decoration: none; font-weight: 600; }
+        
+        @media (max-width: 600px) {
+            .input-group { flex-direction: column; }
+            button.btn-load { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav>
+        <a href="/" class="nav-logo">yt<span>clipper</span></a>
+        <div class="nav-links">
+            <a href="#clipper">Tool</a>
+            <a href="#guide">How to Use</a>
+        </div>
+    </nav>
+
+    <main>
+        <h1 class="hero-title">Download YouTube Clips</h1>
+        <p class="hero-subtitle">Trim and download specific parts of any YouTube video in seconds.</p>
+
+        <!-- Main Clipper Section -->
+        <section id="clipper" style="width: 100%; display: flex; justify-content: center;">
+            <div class="container">
+                
+                <div class="form-group">
+                    <label for="url">YouTube URL</label>
+                    <div class="input-group">
+                        <input type="url" id="url" placeholder="https://youtube.com/watch?v=..." autocomplete="off">
+                        <button class="btn-load" id="loadBtn" onclick="loadVideo()">Load</button>
+                    </div>
+                </div>
+
+                <!-- Hidden Editor Section -->
+                <div id="editor-section">
+                    <div id="player-container">
+                        <div id="player"></div>
+                    </div>
+
+                    <div id="slider-container">
+                        <div id="time-slider"></div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px;">
+                        <div class="form-group">
+                            <label>Start Time</label>
+                            <input type="text" id="start" class="time-box" placeholder="00:00:00" onchange="updateSliderFromInputs()">
+                        </div>
+                        <div class="form-group">
+                            <label>End Time</label>
+                            <input type="text" id="end" class="time-box" placeholder="00:00:00" onchange="updateSliderFromInputs()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Video Quality</label>
+                        <select id="quality">
+                            <option value="1080">1080p (Max)</option>
+                            <option value="720">720p</option>
+                            <option value="480">480p</option>
+                            <option value="360">360p</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn-full" id="downloadBtn" onclick="processDownload()">Download Clip</button>
+                    <div id="status"></div>
+                </div>
+                
+            </div>
+        </section>
+
+        <!-- Guide Section -->
+        <section id="guide">
+            <h2 class="guide-title">How to download a clip?</h2>
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <div class="guide-step">1</div>
+                    <h3>Paste the Link</h3>
+                    <p>Copy the URL of the YouTube video you want to trim and paste it into the input box above. Click 'Load Video'.</p>
+                </div>
+                <div class="guide-card">
+                    <div class="guide-step">2</div>
+                    <h3>Select the Timestamps</h3>
+                    <p>Use the interactive slider below the video preview or manually type the start and end times to select your perfect clip.</p>
+                </div>
+                <div class="guide-card">
+                    <div class="guide-step">3</div>
+                    <h3>Download File</h3>
+                    <p>Choose your preferred video quality and click download. We will process and trim the video directly to your device.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 ytclipper. All rights reserved. Built for fast and easy video trimming.</p>
+    </footer>
+
+    <script>
+        let player;
+        let isPlayerReady = false;
+        let videoDuration = 0;
+        let slider = document.getElementById('time-slider');
+        let sliderInitialized = false;
+
+        function formatTime(seconds) {
+            let h = Math.floor(seconds / 3600);
+            let m = Math.floor((seconds % 3600) / 60);
+            let s = Math.floor(seconds % 60);
+            return [
+                h.toString().padStart(2, '0'),
+                m.toString().padStart(2, '0'),
+                s.toString().padStart(2, '0')
+            ].join(':');
+        }
+
+        function parseTime(timeStr) {
+            let p = timeStr.split(':');
+            let s = 0; let m = 1;
+            while (p.length > 0) {
+                s += m * parseInt(p.pop(), 10);
+                m *= 60;
+            }
+            return s;
+        }
+
+        function extractVideoID(url) {
+            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[7].length == 11) ? match[7] : false;
+        }
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '100%', width: '100%', videoId: '',
+                playerVars: { 'modestbranding': 1, 'rel': 0 },
+                events: { 'onReady': () => isPlayerReady = true, 'onStateChange': onPlayerStateChange }
+            });
+        }
+
+        function onPlayerStateChange(event) {
+            if ((event.data == YT.PlayerState.CUED || event.data == YT.PlayerState.PLAYING) && videoDuration === 0) {
+                videoDuration = player.getDuration();
+                initSlider(videoDuration);
+            }
+        }
+
+        function loadVideo() {
+            const url = document.getElementById('url').value;
+            const vidId = extractVideoID(url);
+            
+            if(!vidId) {
+                alert("Please enter a valid YouTube URL.");
+                return;
+            }
+            
+            // Show the editor section
+            document.getElementById('editor-section').style.display = 'block';
+            
+            // Change load button text to indicate update
+            document.getElementById('loadBtn').innerText = 'Update';
+
+            if(isPlayerReady) {
+                player.cueVideoById(vidId);
+                videoDuration = 0; // reset duration to force re-init
+            } else {
+                // If API isn't ready yet, try again in 500ms
+                setTimeout(() => loadVideo(), 500);
+            }
+        }
+
+        function initSlider(duration) {
+            if (sliderInitialized) {
+                slider.noUiSlider.updateOptions({ range: { 'min': 0, 'max': duration } });
+                slider.noUiSlider.set([0, Math.min(10, duration)]);
+            } else {
+                noUiSlider.create(slider, {
+                    start: [0, Math.min(10, duration)],
+                    connect: true,
+                    range: { 'min': 0, 'max': duration }
+                });
+                
+                slider.noUiSlider.on('slide', function(values, handle) {
+                    player.seekTo(parseFloat(values[handle]), true);
+                    document.getElementById('start').value = formatTime(values[0]);
+                    document.getElementById('end').value = formatTime(values[1]);
+                });
+
+                slider.noUiSlider.on('update', function(values) {
+                    document.getElementById('start').value = formatTime(values[0]);
+                    document.getElementById('end').value = formatTime(values[1]);
+                });
+
+                sliderInitialized = true;
+            }
+        }
+
+        function updateSliderFromInputs() {
+            if(!sliderInitialized) return;
+            const startStr = document.getElementById('start').value;
+            const endStr = document.getElementById('end').value;
+            
+            let s = parseTime(startStr) || 0;
+            let e = parseTime(endStr) || videoDuration;
+            
+            slider.noUiSlider.set([s, e]);
+            player.seekTo(s, true); 
+        }
+
+        async function processDownload() {
+            const url = document.getElementById('url').value;
+            const start = document.getElementById('start').value;
+            const end = document.getElementById('end').value;
+            const quality = document.getElementById('quality').value;
+            const statusEl = document.getElementById('status');
+            const btn = document.getElementById('downloadBtn');
+
+            if (!url || !start || !end) {
+                statusEl.innerHTML = "<div class='error'>Please fill out all fields.</div>"; return;
+            }
+
+            statusEl.innerHTML = "<span style='color: var(--text-muted);'>Processing video... this may take a few moments.</span>";
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url, start_time: start, end_time: end, quality: quality })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = downloadUrl;
+                    a.download = `ytclipper_${start.replace(/:/g, '')}_${end.replace(/:/g, '')}_${quality}p.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(downloadUrl);
+                    statusEl.innerHTML = "<span style='color: #4CAF50; font-weight: bold;'>✓ Download complete!</span>";
+                } else {
+                    const errData = await response.json();
+                    statusEl.innerHTML = `<div class="error">${errData.error}</div>`;
+                }
+            } catch (error) {
+                statusEl.innerHTML = `<div class="error">Network error or connection lost.</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Download Clip";
+            }
+        }
+    </script>
+</body>
+</html>
