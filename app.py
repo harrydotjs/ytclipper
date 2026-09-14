@@ -42,7 +42,6 @@ def download():
         sys.executable, "-m", "yt_dlp",
         "--ffmpeg-location", ffmpeg_exe,
         "--cookies", "cookies.txt",
-        "--extractor-args", "youtube:player_client=tv,ios",
         "--concurrent-fragments", "16",
         "--download-sections", f"*{start_time}-{end_time}",
         "-f", vid_format,
