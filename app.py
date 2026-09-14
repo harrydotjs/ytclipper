@@ -40,6 +40,7 @@ def download():
     command = [
         sys.executable, "-m", "yt_dlp",
         "--ffmpeg-location", ffmpeg_exe,
+        "--extractor-args", "youtube:player_client=android", 
         "--concurrent-fragments", "16",
         "--download-sections", f"*{start_time}-{end_time}",
         "-f", vid_format,
