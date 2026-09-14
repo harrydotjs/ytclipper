@@ -37,9 +37,11 @@ def download():
 
     vid_format = f"bv*[ext=mp4][vcodec^=avc1][height<={quality}]+ba[ext=m4a]/bv*[ext=mp4][height<={quality}]+ba[ext=m4a]/mp4"
 
+    # We added the --cookies line here
     command = [
         sys.executable, "-m", "yt_dlp",
         "--ffmpeg-location", ffmpeg_exe,
+        "--cookies", "cookies.txt",
         "--extractor-args", "youtube:player_client=tv,ios",
         "--concurrent-fragments", "16",
         "--download-sections", f"*{start_time}-{end_time}",
